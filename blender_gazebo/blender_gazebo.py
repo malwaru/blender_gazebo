@@ -1,8 +1,8 @@
 bl_info = {
     "name":         "ROS Gazebo Exporter",
     "author":       "Dave Niewinski",
-    "version":      (0,0,1),
-    "blender":      (2,80,0),
+    "version":      (1,0,0),
+    "blender":      (3,60,1),
     "location":     "File > Import-Export",
     "description":  "Export Gazebo",
     "category":     "Import-Export"
@@ -25,7 +25,7 @@ class InternalData():
 class BodyLaunch(InternalData):
     def __init__(self):
         self.text = '''<launch>
-  <param name="$NAME$_description" command="$(find xacro)/xacro --inorder '$(find $PACKAGE$)/urdf/$NAME$.urdf.xacro'" />
+  <param name="$NAME$_description" command="$(find xacro)/xacro  '$(find $PACKAGE$)/urdf/$NAME$.urdf.xacro'" />
 
   <node name="spawn_$NAME$" pkg="gazebo_ros" type="spawn_model" args="-param $NAME$_description -urdf -model $NAME$" respawn="false"/>
 </launch>
@@ -34,7 +34,10 @@ class BodyLaunch(InternalData):
 class BodyURDF(InternalData):
     def __init__(self):
         self.text = '''<?xml version="1.0"?>
-<robot name="robot" xmlns:xacro="http://www.ros.org/wiki/xacro">
+<robot name="terrain" xmlns:xacro="http://www.ros.org/wiki/xacro">
+  
+  <link name="base_link" >
+  </link>
   <link name="$NAME$_link">
     <inertial>
       <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -44,16 +47,27 @@ class BodyURDF(InternalData):
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://$PACKAGE$/meshes/$VISUAL$"/>
+        <mesh filename="package://$PACKAGE$/src/description/meshes/$VISUAL$"/>
       </geometry>
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://$PACKAGE$/meshes/$COLLISION$"/>
+        <mesh filename="package://$PACKAGE$/src/description/meshes/$COLLISION$"/>
       </geometry>
     </collision>
   </link>
+   <joint name="base_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="$NAME$_link"/>
+    <origin
+      xyz="0 0 0"
+      rpy="0 0 0" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+
+
 
   <gazebo> <static>true</static></gazebo>
 </robot>
@@ -96,9 +110,9 @@ class GazeboExport(bpy.types.Operator, ExportHelper) :
         (dirname, filename) = os.path.split(launch_file)
         (shortname, extension) = os.path.splitext(filename)
         root_dir = os.path.abspath(os.path.join(dirname, ".."))
-        mesh_dir = os.path.join(root_dir, "meshes/")
-        urdf_dir = os.path.join(root_dir, "urdf/")
-        launch_dir = os.path.join(root_dir, "launch/")
+        mesh_dir = os.path.join(root_dir, "src/description/meshes/")
+        urdf_dir = os.path.join(root_dir, "src/description/urdf/")
+        launch_dir = os.path.join(root_dir, "src/description/launch/")
         package_name = root_dir.split("/")
         package_name = package_name[-1]
 
